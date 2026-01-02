@@ -1,4 +1,4 @@
-#include "./snake.h"
+#include "./game.h"
 #include <stdexcept>
 #include <iostream>
 
