@@ -10,6 +10,7 @@
 
 RenderLoop::RenderLoop()
 {
+    /* Snake */
     snake = new Snake;
     snake->head = new Position;
     snake->head->y = get_top_boundary_idx() + 1;
@@ -41,26 +42,55 @@ unsigned char RenderLoop::get_bottom_boundary_idx()
     return height - 1;
 }
 
-void RenderLoop::set_game_screen()
+bool RenderLoop::is_game_over()
+{
+    if (snake->direction == RIGHT && snake->head->x == get_right_boundary_idx())
+        return true;
+
+    return false;
+}
+
+void RenderLoop::game_over()
 {
     reset_screen();
 
-    coin_position.y = (height / 2) + get_top_boundary_idx();
-    coin_position.x = (width / 2) + get_left_boundary_idx();
-    place_str_screen(&coin_position.y, &coin_position.x, coin_str);
-    place_snake_str_screen(snake);
+    unsigned char delay = 50;
+    place_bobble_str_screen();
+    print(&delay);
+
+    reset_screen();
+    print(&delay);
+
+    unsigned char game_over_y_idx = height / 2;
+    unsigned char game_over_x_idx = (width / 2) - get_str_len(game_over_str) / 2;
+    place_str_screen(&game_over_y_idx, &game_over_x_idx, game_over_str);
+
+    unsigned char developer_y_idx = game_over_y_idx + 1;
+    unsigned char developer_x_idx = (width / 2) - get_str_len(developer_str) / 2;
+    place_str_screen(&developer_y_idx, &developer_x_idx, developer_str);
+
+    unsigned char i_love_c_y_idx = game_over_y_idx + 2;
+    unsigned char i_love_c_x_idx = (width / 2) - get_str_len(i_love_c_str) / 2;
+    place_str_screen(&i_love_c_y_idx, &i_love_c_x_idx, i_love_c_str);
+    print(nullptr);
+}
+
+void RenderLoop::set_game_screen()
+{
     std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
     while (true)
     {
-        move_snake(snake, false);
+        if (is_game_over())
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
+            game_over();
+            break;
+        }
         reset_screen();
-        coin_position.y = (height / 2) + get_top_boundary_idx();
-        coin_position.x = (width / 2) + get_left_boundary_idx();
-        place_str_screen(&coin_position.y, &coin_position.x, coin_str);
+        move_snake(snake, false);
         place_snake_str_screen(snake);
         print(nullptr);
-        std::cout << '\a';
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 }
@@ -145,12 +175,9 @@ void RenderLoop::place_str_screen(const unsigned char *y_idx, const unsigned cha
     }
 }
 
-void RenderLoop::set_menu_screen()
+void RenderLoop::place_bobble_str_screen()
 {
-    unsigned char delay = 50;
-
     reset_screen();
-
     // Render bobbles
     unsigned char bobble_top_idex = get_top_boundary_idx() + 1;
     unsigned char bobble_bottom_idx = get_bottom_boundary_idx();
@@ -159,6 +186,12 @@ void RenderLoop::set_menu_screen()
     {
         place_str_screen(&i, &bobble_left_idx, bobbles_str);
     }
+}
+
+void RenderLoop::set_menu_screen()
+{
+    unsigned char delay = 50;
+    place_bobble_str_screen();
     print(&delay);
 
     reset_screen();

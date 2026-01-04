@@ -52,6 +52,7 @@ private:
     void set_menu_screen();
     void set_game_screen();
     void set_autoplay_screen();
+    void place_snake_str_screen(Snake *snake);
     void place_str_screen(const unsigned char *y_idx, const unsigned char *x_idx, const char *str);
     size_t get_str_len(const char *str);
     void read_line(unsigned char *pressed_key);
@@ -60,12 +61,14 @@ private:
     void add_snake(Snake *snake);
     void change_direction_snake(Snake *snake);
     void move_snake(Snake *snake, bool rec_call);
-    void place_snake_str_screen(Snake *snake);
+    bool is_game_over();
+    void game_over();
+    void place_bobble_str_screen();
     unsigned char pressed_key;
     static constexpr unsigned char height = 30;
     static constexpr unsigned char width = 30;
     char screen[height][width];
-    Position coin_position = {0, 0};
+    Position coins_positions[10] = {};
     Snake *snake;
     static constexpr const char temp_indicator_char = '.';
     static constexpr const char space_char = ' ';
@@ -77,6 +80,9 @@ private:
     static constexpr const char *menu_item_one_str = "PLAY GAME PRESS 1";
     static constexpr const char *menu_item_two_str = "SMART AUTOPLAY PRESS 2";
     static constexpr const char *bobbles_str = "  * * * * * * * * * * * * ";
+    static constexpr const char *game_over_str = "GAME OVER!";
+    static constexpr const char *developer_str = "DEVELOPED BY JSMAN :)";
+    static constexpr const char *i_love_c_str = "I LOVE C/C++";
     Scene scene;
     bool exit = false;
 };
