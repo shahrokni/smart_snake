@@ -42,6 +42,21 @@ unsigned char RenderLoop::get_bottom_boundary_idx()
     return height - 1;
 }
 
+void RenderLoop::add_to_tail_snake(Snake *snake)
+{
+    if (snake->child == nullptr)
+    {
+        snake->cnt = snake->cnt + 1;
+        return;
+    }
+    add_to_tail_snake(snake->child);
+}
+
+bool RenderLoop::got_score()
+{
+    return snake->head->x == coin_position.x && snake->head->y == coin_position.y;
+}
+
 bool RenderLoop::is_game_over()
 {
     if (snake->direction == RIGHT && snake->head->x == get_right_boundary_idx())
@@ -87,9 +102,28 @@ void RenderLoop::set_game_screen()
             game_over();
             break;
         }
+
+        if (got_score())
+        {
+            add_to_tail_snake(snake);
+            // remove the coin from screen
+            place_str_screen(&coin_position.y, &coin_position.x, &snake_body_char);
+            std::cout << '\a';
+            coin_position.x = 0;
+            coin_position.y = 0;
+
+            continue;
+        }
+
         reset_screen();
+
         move_snake(snake, false);
         place_snake_str_screen(snake);
+
+        /* HERE, WE SHOULD SET THE COIN */
+        if (coin_position.y != 0 && coin_position.x != 0)
+            place_str_screen(&coin_position.y, &coin_position.x, coin_str);
+
         print(nullptr);
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
