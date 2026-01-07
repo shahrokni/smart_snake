@@ -1,0 +1,1 @@
+g++ -g -O0 -Wall -Wextra src/*.cpp -o app

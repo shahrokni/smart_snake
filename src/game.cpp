@@ -12,14 +12,14 @@ RenderLoop::RenderLoop()
 {
     /* Snake */
     snake = new Snake;
-    snake->head = new Position;
-    snake->head->y = get_top_boundary_idx() + 1;
-    snake->head->x = get_left_boundary_idx() + 4;
-    snake->cnt = 3;
-    snake->child = nullptr;
-    snake->parent = nullptr;
-    snake->direction = RIGHT;
-    snake->joint = false;
+    snake->start = new SnakePart;
+    snake->start->postion = new Position;
+    snake->start->postion->y = get_top_boundary_idx() + 1;
+    snake->start->postion->x = get_left_boundary_idx() + 5;
+    snake->start->cnt = 4;
+    snake->start->next = nullptr;
+    snake->start->prev = nullptr;
+    snake->start->direction = RIGHT;
 }
 
 unsigned char RenderLoop::get_left_boundary_idx()
@@ -42,24 +42,30 @@ unsigned char RenderLoop::get_bottom_boundary_idx()
     return height - 1;
 }
 
-void RenderLoop::add_to_tail_snake(Snake *snake)
+void RenderLoop::add_to_tail_snake(SnakePart *snake_part)
 {
-    if (snake->child == nullptr)
+    if (snake_part->next == nullptr)
     {
-        snake->cnt = snake->cnt + 1;
+        snake_part->cnt = snake_part->cnt + 1;
         return;
     }
-    add_to_tail_snake(snake->child);
+    add_to_tail_snake(snake_part->next);
 }
 
 bool RenderLoop::got_score()
 {
-    return snake->head->x == coin_position.x && snake->head->y == coin_position.y;
+    return snake->start->postion->x == coin_position.x && snake->start->postion->y == coin_position.y;
 }
 
 bool RenderLoop::is_game_over()
 {
-    if (snake->direction == RIGHT && snake->head->x == get_right_boundary_idx())
+    if (snake->start->direction == RIGHT && snake->start->postion->x == get_right_boundary_idx())
+        return true;
+    if (snake->start->direction == LEFT && snake->start->postion->x == get_left_boundary_idx())
+        return true;
+    if (snake->start->direction == DOWN && snake->start->postion->y == get_bottom_boundary_idx())
+        return true;
+    if (snake->start->direction == UP && snake->start->postion->y == get_top_boundary_idx())
         return true;
 
     return false;
@@ -90,6 +96,65 @@ void RenderLoop::game_over()
     print(nullptr);
 }
 
+void RenderLoop::remove_from_snake(SnakePart *snake_part)
+{
+    if (snake_part == nullptr)
+        return;
+
+    if (snake_part->cnt == 0)
+    {
+        // Are you sure?
+        snake_part->prev->next = nullptr;
+        delete snake_part->postion;
+        snake_part->postion = nullptr;
+        delete snake_part;
+        return;
+    }
+
+    snake_part->cnt -= 1;
+    remove_from_snake(snake_part->next);
+}
+
+void RenderLoop::change_snake_direction()
+{
+    if ((pressed_key == 'w' || pressed_key == 's') && (snake->start->direction == UP || snake->start->direction == DOWN))
+        return;
+
+    if ((pressed_key == 'd' || pressed_key == 'a') && (snake->start->direction == RIGHT || snake->start->direction == LEFT))
+        return;
+
+    if (pressed_key == ' ')
+        return;
+
+    SnakePart *snake_part = new SnakePart;
+    snake_part->cnt = 1;
+    snake_part->prev = nullptr;
+    snake_part->next = snake->start;
+    snake->start->prev = snake_part;
+    remove_from_snake(snake->start);
+    /* replace the start */
+    snake->start = snake_part;
+    char x_corrector = 0;
+    char y_corrector = 0;
+    if (pressed_key == 's')
+    {
+        snake_part->direction = DOWN;
+        x_corrector = 0;
+        y_corrector = 1;
+    }
+    if (pressed_key == 'd')
+    {
+        snake_part->direction = RIGHT;
+        x_corrector = 1;
+        y_corrector = 0;
+    }
+    snake_part->postion = new Position;
+    snake_part->postion->x = snake_part->postion->x + x_corrector;
+    snake_part->postion->y = snake_part->postion->y + y_corrector;
+
+    clear_pressed_key(&pressed_key);
+}
+
 void RenderLoop::set_game_screen()
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(300));
@@ -105,19 +170,17 @@ void RenderLoop::set_game_screen()
 
         if (got_score())
         {
-            add_to_tail_snake(snake);
-            // remove the coin from screen
+            add_to_tail_snake(snake->start);
             place_str_screen(&coin_position.y, &coin_position.x, &snake_body_char);
             std::cout << '\a';
             coin_position.x = 0;
             coin_position.y = 0;
-
             continue;
         }
-
+        read_line(&pressed_key);
+        change_snake_direction();
         reset_screen();
-
-        move_snake(snake, false);
+        move_snake(snake->start, false);
         place_snake_str_screen(snake);
 
         /* HERE, WE SHOULD SET THE COIN */
@@ -125,7 +188,7 @@ void RenderLoop::set_game_screen()
             place_str_screen(&coin_position.y, &coin_position.x, coin_str);
 
         print(nullptr);
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
     }
 }
 
@@ -142,56 +205,100 @@ size_t RenderLoop::get_str_len(const char *str)
     return len;
 }
 
-void RenderLoop::move_snake(Snake *snake, bool rec_call)
+void RenderLoop::move_snake(SnakePart *snake_part, bool rec_call)
 {
-    if (snake == nullptr)
+    if (snake_part == nullptr)
         return;
 
-    if (snake->direction == RIGHT)
+    if (snake_part->cnt == 0)
     {
-        snake->head->x = snake->head->x + 1;
+
+        snake_part->prev->next = nullptr;
+        delete snake_part->postion;
+        snake_part->postion = nullptr;
+        delete snake_part;
+        return;
     }
-    move_snake(snake->child, true);
+
+    char x_corrector = 0;
+    char y_corrector = 0;
+    if (snake_part->direction == RIGHT)
+    {
+        if (snake_part->prev == nullptr || snake_part->postion->x + 1 <= snake_part->prev->postion->x)
+        {
+            x_corrector = 1;
+            y_corrector = 0;
+        }
+    }
+    else if (snake_part->direction == LEFT)
+    {
+        x_corrector = -1;
+        y_corrector = 0;
+    }
+    else if (snake_part->direction == UP)
+    {
+        x_corrector = 0;
+        y_corrector = -1;
+    }
+    else
+    {
+        x_corrector = 0;
+        y_corrector = 1;
+    }
+
+    snake_part->postion->x += x_corrector;
+    snake_part->postion->y += y_corrector;
+
+    if (snake_part->next != nullptr && snake_part->next->cnt >= 1)
+    {
+
+        snake_part->cnt += 1;
+        snake_part->next->cnt -= 1;
+    }
+
+    move_snake(snake_part->next, true);
 }
 
 void RenderLoop::place_snake_str_screen(Snake *snake)
 {
-    Snake *current_snake = snake;
-    while (current_snake != nullptr)
+    SnakePart *current_part = snake->start;
+    while (current_part != nullptr)
     {
-        screen[current_snake->head->y][current_snake->head->x] = snake_body_char;
+        screen[current_part->postion->y][current_part->postion->x] = snake_body_char;
+        if (current_part->cnt > 1)
+        {
+            char y_printer_iterator, x_printer_iterator = 0;
+            if (current_part->direction == DOWN)
+            {
+                y_printer_iterator = -1;
+                x_printer_iterator = 0;
+            }
+            else if (current_part->direction == UP)
+            {
+                y_printer_iterator = 1;
+                x_printer_iterator = 0;
+            }
+            else if (current_part->direction == LEFT)
+            {
+                y_printer_iterator = 0;
+                x_printer_iterator = 1;
+            }
+            else
+            {
+                y_printer_iterator = 0;
+                x_printer_iterator = -1;
+            }
 
-        char y_printer_iterator, x_printer_iterator = 0;
-        if (current_snake->direction == DOWN)
-        {
-            y_printer_iterator = -1;
-            x_printer_iterator = 0;
+            unsigned char row_x = current_part->postion->x + x_printer_iterator;
+            unsigned char row_y = current_part->postion->y + y_printer_iterator;
+            for (size_t i = 0; i < current_part->cnt - 1; i += 1)
+            {
+                screen[row_y][row_x] = snake_body_char;
+                row_x = row_x + x_printer_iterator;
+                row_y = row_y + y_printer_iterator;
+            }
         }
-        else if (current_snake->direction == UP)
-        {
-            y_printer_iterator = 1;
-            x_printer_iterator = 0;
-        }
-        else if (current_snake->direction == LEFT)
-        {
-            y_printer_iterator = 0;
-            x_printer_iterator = 1;
-        }
-        else
-        {
-            y_printer_iterator = 0;
-            x_printer_iterator = -1;
-        }
-
-        unsigned char row_x = current_snake->head->x + x_printer_iterator;
-        unsigned char row_y = current_snake->head->y + y_printer_iterator;
-        for (size_t i = 0; i < current_snake->cnt - 1; i += 1)
-        {
-            screen[row_y][row_x] = snake_body_char;
-            row_x = row_x + x_printer_iterator;
-            row_y = row_y + y_printer_iterator;
-        }
-        current_snake = current_snake->child;
+        current_part = current_part->next;
     }
 }
 
@@ -269,15 +376,15 @@ void RenderLoop::check_prereq()
     unsigned short int rows = w.ws_row;
     unsigned short int cols = w.ws_col;
 
-    if (cols < width || rows < height)
-        throw std::runtime_error("Exception: Small screen. Maximize the console.");
+    // if (cols < width || rows < height)
+    //  throw std::runtime_error("Exception: Small screen. Maximize the console.");
 }
 
 void RenderLoop::init_screen()
 {
     /* screen pre-init */
-    for (size_t i = 0; i < width; i += 1)
-        for (size_t j = 0; j < height; j += 1)
+    for (size_t i = 0; i < height; i += 1)
+        for (size_t j = 0; j < width; j += 1)
             screen[i][j] = space_char;
 
     /* screen boundary - top and bottom*/

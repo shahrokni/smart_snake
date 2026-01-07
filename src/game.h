@@ -22,14 +22,18 @@ enum Direction
     DOWN
 };
 
+struct SnakePart
+{
+    SnakePart *prev;
+    SnakePart *next;
+    unsigned char cnt;
+    Direction direction;
+    Position *postion;
+};
+
 struct Snake
 {
-    unsigned char cnt;
-    bool joint;
-    Snake *child;
-    Snake *parent;
-    Position *head;
-    Direction direction;
+    SnakePart *start;
 };
 
 class RenderLoop
@@ -58,13 +62,15 @@ private:
     void read_line(unsigned char *pressed_key);
     void clear_pressed_key(unsigned char *pressed_key);
     void remove_snake_tail(Snake *snake);
-    void add_to_tail_snake(Snake *snake);
+    void remove_from_snake(SnakePart *snake_part);
+    void add_to_tail_snake(SnakePart *snake_part);
     void change_direction_snake(Snake *snake);
-    void move_snake(Snake *snake, bool rec_call);
+    void move_snake(SnakePart *snake_part, bool rec_call);
     bool is_game_over();
     void game_over();
     void place_bobble_str_screen();
     bool got_score();
+    void change_snake_direction();
     unsigned char pressed_key;
     static constexpr unsigned char height = 30;
     static constexpr unsigned char width = 30;
