@@ -149,8 +149,8 @@ void RenderLoop::change_snake_direction()
         y_corrector = 0;
     }
     snake_part->postion = new Position;
-    snake_part->postion->x = snake_part->postion->x + x_corrector;
-    snake_part->postion->y = snake_part->postion->y + y_corrector;
+    snake_part->postion->x = snake_part->next->postion->x + x_corrector;
+    snake_part->postion->y = snake_part->next->postion->y + y_corrector;
 
     clear_pressed_key(&pressed_key);
 }
