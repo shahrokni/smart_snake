@@ -55,7 +55,6 @@ private:
     void set_scene();
     void set_menu_screen();
     void set_game_screen();
-    void set_autoplay_screen();
     void place_snake_str_screen(Snake *snake);
     void place_str_screen(const unsigned char *y_idx, const unsigned char *x_idx, const char *str);
     size_t get_str_len(const char *str);
@@ -85,7 +84,6 @@ private:
     static constexpr const char *welcome_message_str = "~SMART SNAKE~";
     static constexpr const char *separator_line_str = "-------------";
     static constexpr const char *menu_item_one_str = "PLAY GAME PRESS 1";
-    static constexpr const char *menu_item_two_str = "SMART AUTOPLAY PRESS 2";
     static constexpr const char *bobbles_str = "  * * * * * * * * * * * * ";
     static constexpr const char *game_over_str = "GAME OVER!";
     static constexpr const char *developer_str = "DEVELOPED BY JSMAN :)";

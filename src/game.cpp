@@ -59,6 +59,7 @@ bool RenderLoop::got_score()
 
 bool RenderLoop::is_game_over()
 {
+    /* Check bouncing against a wall */
     if (snake->start->direction == RIGHT && snake->start->postion->x == get_right_boundary_idx())
         return true;
     if (snake->start->direction == LEFT && snake->start->postion->x == get_left_boundary_idx())
@@ -67,6 +68,51 @@ bool RenderLoop::is_game_over()
         return true;
     if (snake->start->direction == UP && snake->start->postion->y == get_top_boundary_idx())
         return true;
+
+    /* Check self_cross */
+    unsigned char head_x = snake->start->postion->x;
+    unsigned char head_y = snake->start->postion->y;
+    SnakePart *snake_part_ref = snake->start->next;
+
+    while (true)
+    {
+        if (snake_part_ref == nullptr)
+            break;
+
+        unsigned char p_x_end = 0;
+        unsigned char p_y_end = 0;
+
+        if (snake_part_ref->direction == UP)
+        {
+            p_x_end = snake_part_ref->postion->x;
+            p_y_end = snake_part_ref->postion->y + snake_part_ref->cnt;
+        }
+        if (snake_part_ref->direction == DOWN)
+        {
+            p_x_end = snake_part_ref->postion->x;
+            p_y_end = abs(snake_part_ref->postion->y - snake_part_ref->cnt);
+        }
+        if (snake_part_ref->direction == LEFT)
+        {
+            p_y_end = snake_part_ref->postion->y;
+            p_x_end = snake_part_ref->postion->x + snake_part_ref->cnt;
+        }
+        if (snake_part_ref->direction == RIGHT)
+        {
+            p_y_end = snake_part_ref->postion->y;
+            p_x_end = abs(snake_part_ref->postion->x - snake_part_ref->cnt);
+        }
+
+        if (std::min(p_x_end, snake_part_ref->postion->x) <= head_x && std::max(p_x_end, snake_part_ref->postion->x) >= head_x)
+        {
+            if (std::min(p_y_end, snake_part_ref->postion->y) <= head_y && std::max(p_y_end, snake_part_ref->postion->y) >= head_y)
+            {
+                return true;
+            }
+        }
+
+        snake_part_ref = snake_part_ref->next;
+    }
 
     return false;
 }
@@ -131,7 +177,7 @@ void RenderLoop::change_snake_direction()
     snake_part->prev = nullptr;
     snake_part->next = snake->start;
     snake->start->prev = snake_part;
-    remove_from_snake(snake->start);
+    // remove_from_snake(snake->start);
     /* replace the start */
     snake->start = snake_part;
     char x_corrector = 0;
@@ -141,6 +187,18 @@ void RenderLoop::change_snake_direction()
         snake_part->direction = DOWN;
         x_corrector = 0;
         y_corrector = 1;
+    }
+    if (pressed_key == 'w')
+    {
+        snake_part->direction = UP;
+        x_corrector = 0;
+        y_corrector = -1;
+    }
+    if (pressed_key == 'a')
+    {
+        snake_part->direction = LEFT;
+        x_corrector = -1;
+        y_corrector = 0;
     }
     if (pressed_key == 'd')
     {
@@ -192,11 +250,6 @@ void RenderLoop::set_game_screen()
     }
 }
 
-void RenderLoop::set_autoplay_screen()
-{
-    return;
-}
-
 size_t RenderLoop::get_str_len(const char *str)
 {
     size_t len = 0;
@@ -224,7 +277,7 @@ void RenderLoop::move_snake(SnakePart *snake_part, bool rec_call)
     char y_corrector = 0;
     if (snake_part->direction == RIGHT)
     {
-        if (snake_part->prev == nullptr || snake_part->postion->x + 1 <= snake_part->prev->postion->x)
+        if (snake_part->prev == nullptr || snake_part->postion->x + 1 < snake_part->prev->postion->x)
         {
             x_corrector = 1;
             y_corrector = 0;
@@ -232,17 +285,23 @@ void RenderLoop::move_snake(SnakePart *snake_part, bool rec_call)
     }
     else if (snake_part->direction == LEFT)
     {
-        x_corrector = -1;
-        y_corrector = 0;
+        if (snake_part->prev == nullptr || snake_part->postion->x - 1 > snake_part->prev->postion->x)
+        {
+            x_corrector = -1;
+            y_corrector = 0;
+        }
     }
     else if (snake_part->direction == UP)
     {
-        x_corrector = 0;
-        y_corrector = -1;
+        if (snake_part->prev == nullptr || snake_part->postion->y - 1 > snake_part->prev->postion->y)
+        {
+            x_corrector = 0;
+            y_corrector = -1;
+        }
     }
     else
     {
-        if (snake_part->prev == nullptr || snake_part->postion->y + 1 <= snake_part->prev->postion->y)
+        if (snake_part->prev == nullptr || snake_part->postion->y + 1 < snake_part->prev->postion->y)
         {
             x_corrector = 0;
             y_corrector = 1;
@@ -343,7 +402,6 @@ void RenderLoop::set_menu_screen()
     unsigned char wm_y_idx = height / 2;
     unsigned char separate_line_y_idx = wm_y_idx + 1;
     unsigned char menu_item_one_y_idx = wm_y_idx + 2;
-    unsigned char menu_item_two_y_idx = wm_y_idx + 3;
 
     unsigned char wm_x_idx = (width / 2) - (get_str_len(welcome_message_str) / 2);
     place_str_screen(&wm_y_idx, &wm_x_idx, welcome_message_str);
@@ -353,9 +411,6 @@ void RenderLoop::set_menu_screen()
 
     unsigned char menu_item_one_x_idx = (width / 2) - (get_str_len(menu_item_one_str) / 2);
     place_str_screen(&menu_item_one_y_idx, &menu_item_one_x_idx, menu_item_one_str);
-
-    unsigned char menu_item_two_x_idx = (width / 2) - (get_str_len(menu_item_two_str) / 2);
-    place_str_screen(&menu_item_two_y_idx, &menu_item_two_x_idx, menu_item_two_str);
 
     print(&delay);
 
@@ -461,11 +516,6 @@ void RenderLoop::render()
     {
         clear_pressed_key(&pressed_key);
         set_game_screen();
-    }
-    else
-    {
-        clear_pressed_key(&pressed_key);
-        set_autoplay_screen();
     }
 }
 
