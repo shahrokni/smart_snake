@@ -59,7 +59,7 @@ bool RenderLoop::got_score()
 
 bool RenderLoop::is_game_over()
 {
-    /* Check bouncing against a wall */
+    /* the following block checks bouncing against the wall */
     if (snake->start->direction == RIGHT && snake->start->postion->x == get_right_boundary_idx())
         return true;
     if (snake->start->direction == LEFT && snake->start->postion->x == get_left_boundary_idx())
@@ -69,7 +69,7 @@ bool RenderLoop::is_game_over()
     if (snake->start->direction == UP && snake->start->postion->y == get_top_boundary_idx())
         return true;
 
-    /* Check self_cross */
+    /* the following block checks the self-destruction */
     unsigned char head_x = snake->start->postion->x;
     unsigned char head_y = snake->start->postion->y;
     SnakePart *snake_part_ref = snake->start->next;
