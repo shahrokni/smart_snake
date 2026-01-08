@@ -242,8 +242,11 @@ void RenderLoop::move_snake(SnakePart *snake_part, bool rec_call)
     }
     else
     {
-        x_corrector = 0;
-        y_corrector = 1;
+        if (snake_part->prev == nullptr || snake_part->postion->y + 1 <= snake_part->prev->postion->y)
+        {
+            x_corrector = 0;
+            y_corrector = 1;
+        }
     }
 
     snake_part->postion->x += x_corrector;
