@@ -142,23 +142,23 @@ void RenderLoop::game_over()
     print(nullptr);
 }
 
-void RenderLoop::remove_from_snake(SnakePart *snake_part)
+void RenderLoop::borrow_from_tail(SnakePart *snake_part)
 {
-    if (snake_part == nullptr)
-        return;
-
-    if (snake_part->cnt == 0)
+    /* this is the tail */
+    if (snake_part->next == nullptr)
     {
-        // Are you sure?
-        snake_part->prev->next = nullptr;
-        delete snake_part->postion;
-        snake_part->postion = nullptr;
-        delete snake_part;
+        snake_part->cnt -= 1;
+        if (snake_part->cnt == 0)
+        {
+            snake_part->prev->next = nullptr;
+            delete snake_part->postion;
+            snake_part->postion = nullptr;
+            delete snake_part;
+        }
         return;
     }
 
-    snake_part->cnt -= 1;
-    remove_from_snake(snake_part->next);
+    borrow_from_tail(snake_part->next);
 }
 
 void RenderLoop::change_snake_direction()
@@ -177,7 +177,7 @@ void RenderLoop::change_snake_direction()
     snake_part->prev = nullptr;
     snake_part->next = snake->start;
     snake->start->prev = snake_part;
-    // remove_from_snake(snake->start);
+    borrow_from_tail(snake->start);
     /* replace the start */
     snake->start = snake_part;
     char x_corrector = 0;

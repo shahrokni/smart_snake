@@ -61,7 +61,7 @@ private:
     void read_line(unsigned char *pressed_key);
     void clear_pressed_key(unsigned char *pressed_key);
     void remove_snake_tail(Snake *snake);
-    void remove_from_snake(SnakePart *snake_part);
+    void borrow_from_tail(SnakePart *snake_part);
     void add_to_tail_snake(SnakePart *snake_part);
     void change_direction_snake(Snake *snake);
     void move_snake(SnakePart *snake_part, bool rec_call);
