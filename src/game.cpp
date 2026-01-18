@@ -10,6 +10,10 @@
 #include <time.h>
 #include <cstdio>
 
+// TODO: couldn't see the coin if the head is placed
+// in the adjacent cell of the coin
+// TODO: Sometimes it doesn't add any coin into the scree!
+// TODO: Coin should not be placed on the adjacent cell of the border
 RenderLoop::RenderLoop()
 {
     /* Snake */
@@ -261,18 +265,16 @@ void RenderLoop::place_coin_screen()
     unsigned char coin_x = (rand() % get_right_boundary_idx() - get_left_boundary_idx()) + get_left_boundary_idx();
     unsigned char coin_y = (rand() % get_bottom_boundary_idx() - get_top_boundary_idx()) + get_top_boundary_idx();
 
-    for (unsigned char i = 0; i < 100; i += 1)
-    {
-        if (std::min(ranges[i].end.x, ranges[i].start.x) > coin_x && std::max(ranges[i].end.x, ranges[i].start.x) < coin_x)
-        {
-            if (std::min(ranges[i].end.y, ranges[i].start.y) > coin_y && std::max(ranges[i].end.y, ranges[i].start.y) < coin_y)
-            {
-                coin_position.x = coin_x;
-                coin_position.y = coin_y;
-                return;
-            }
-        }
-    }
+    bool crossing_boundary = coin_x == get_right_boundary_idx() ||
+                             coin_x == get_left_boundary_idx() ||
+                             coin_y == get_bottom_boundary_idx() ||
+                             coin_y == get_top_boundary_idx();
+
+    if (crossing_boundary)
+        return;
+
+    coin_position.x = coin_x;
+    coin_position.y = coin_y;
 }
 
 void RenderLoop::set_game_screen()
