@@ -14,6 +14,12 @@ struct Position
     unsigned char y;
 };
 
+struct Range
+{
+    Position start;
+    Position end;
+};
+
 enum Direction
 {
     LEFT,
@@ -70,6 +76,7 @@ private:
     void place_bobble_str_screen();
     bool got_score();
     void change_snake_direction();
+    void place_coin_screen();
     unsigned char pressed_key;
     static constexpr unsigned char height = 30;
     static constexpr unsigned char width = 30;

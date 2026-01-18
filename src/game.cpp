@@ -7,6 +7,8 @@
 #include <thread>
 #include <chrono>
 #include <termios.h>
+#include <time.h>
+#include <cstdio>
 
 RenderLoop::RenderLoop()
 {
@@ -213,6 +215,68 @@ void RenderLoop::change_snake_direction()
     clear_pressed_key(&pressed_key);
 }
 
+void RenderLoop::place_coin_screen()
+{
+    /* find occupied ranges */
+    Range ranges[100] = {};
+    unsigned char range_idx = 0;
+    SnakePart *snake_part_current = snake->start;
+    while (true)
+    {
+        ranges[range_idx].start = {.x = snake_part_current->postion->x,
+                                   .y = snake_part_current->postion->y};
+
+        if (snake_part_current->direction == UP)
+        {
+            ranges[range_idx].end = {.x = snake_part_current->postion->x,
+                                     .y = snake_part_current->postion->y + snake_part_current->cnt};
+        }
+
+        if (snake_part_current->direction == DOWN)
+        {
+            ranges[range_idx].end = {.x = snake_part_current->postion->x,
+                                     .y = abs(snake_part_current->postion->y - snake_part_current->cnt)};
+        }
+
+        if (snake_part_current->direction == LEFT)
+        {
+            ranges[range_idx].end = {.x = snake_part_current->postion->x + snake_part_current->cnt,
+                                     .y = snake_part_current->postion->y};
+        }
+
+        if (snake_part_current->direction == RIGHT)
+        {
+            ranges[range_idx].end = {.x = abs(snake_part_current->postion->x - snake_part_current->cnt),
+                                     .y = snake_part_current->postion->y};
+        }
+
+        if (snake_part_current->next == nullptr)
+            break;
+
+        snake_part_current = snake_part_current->next;
+        range_idx += 1;
+    }
+
+    srand(time(NULL));
+    unsigned char coin_x = (rand() % get_right_boundary_idx() - get_left_boundary_idx()) + get_left_boundary_idx();
+    unsigned char coin_y = (rand() % get_bottom_boundary_idx() - get_top_boundary_idx()) + get_top_boundary_idx();
+
+    for (unsigned char i = 0; i < 100; i += 1)
+    {
+        if (std::min(ranges[i].end.x, ranges[i].start.x) <= coin_x && std::max(ranges[i].end.x, ranges[i].start.x) >= coin_x)
+        {
+            if (std::min(ranges[i].end.y, ranges[i].start.y) <= coin_y && std::max(ranges[i].end.y, ranges[i].start.y) >= coin_y)
+            {
+                coin_position.x = coin_x;
+                coin_position.y = coin_y;
+
+                printf("%d.%d", coin_position.x, coin_position.y);
+                return;
+            }
+        }
+    }
+}
+
 void RenderLoop::set_game_screen()
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(300));
@@ -233,6 +297,7 @@ void RenderLoop::set_game_screen()
             std::cout << '\a';
             coin_position.x = 0;
             coin_position.y = 0;
+            place_coin_screen();
             continue;
         }
         read_line(&pressed_key);
@@ -243,7 +308,9 @@ void RenderLoop::set_game_screen()
 
         /* HERE, WE SHOULD SET THE COIN */
         if (coin_position.y != 0 && coin_position.x != 0)
+        {
             place_str_screen(&coin_position.y, &coin_position.x, coin_str);
+        }
 
         print(nullptr);
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
