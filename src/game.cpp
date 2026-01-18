@@ -263,14 +263,12 @@ void RenderLoop::place_coin_screen()
 
     for (unsigned char i = 0; i < 100; i += 1)
     {
-        if (std::min(ranges[i].end.x, ranges[i].start.x) <= coin_x && std::max(ranges[i].end.x, ranges[i].start.x) >= coin_x)
+        if (std::min(ranges[i].end.x, ranges[i].start.x) > coin_x && std::max(ranges[i].end.x, ranges[i].start.x) < coin_x)
         {
-            if (std::min(ranges[i].end.y, ranges[i].start.y) <= coin_y && std::max(ranges[i].end.y, ranges[i].start.y) >= coin_y)
+            if (std::min(ranges[i].end.y, ranges[i].start.y) > coin_y && std::max(ranges[i].end.y, ranges[i].start.y) < coin_y)
             {
                 coin_position.x = coin_x;
                 coin_position.y = coin_y;
-
-                printf("%d.%d", coin_position.x, coin_position.y);
                 return;
             }
         }
